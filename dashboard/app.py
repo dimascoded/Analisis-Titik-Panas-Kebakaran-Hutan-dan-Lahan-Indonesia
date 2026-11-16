@@ -36,7 +36,7 @@ except Exception:
     PAKAI_HUJAN, MODEL_AWAL = False, ""
 
 st.sidebar.title("Titik Panas Karhutla")
-halaman = st.sidebar.radio("Pilih halaman", ["Beranda", "Kapan terjadi?", "Di mana terjadi?", "Luas terbakar", "Daerah rawan", "Prakiraan minggu depan", "Tentang data"])
+halaman = st.sidebar.radio("Pilih halaman", ["Beranda", "Kapan terjadi?", "Di mana terjadi?", "Luas terbakar", "Daerah rawan", "Uji prakiraan model", "Tentang data"])
 tahun_semua = sorted(prov_bulan["tahun"].unique())
 rentang = st.sidebar.select_slider("Tahun yang ditampilkan", options=tahun_semua, value=(tahun_semua[0], tahun_semua[-1]))
 pilih_prov = st.sidebar.multiselect("Batasi ke provinsi tertentu (kosong = semua)", sorted(prov_bulan["provinsi"].unique()))
@@ -169,7 +169,7 @@ elif halaman == "Luas terbakar":
     st.info(f"**Tahun terparah: {th_max}.** Sekitar {angka(tot['luas_ha'].max())} hektare terbakar, kira-kira "
             f"{tot['luas_ha'].max() / JAKARTA_HA:.0f} kali luas DKI Jakarta (±66 ribu hektare).")
     if len(tot) >= 4:
-        r = tot["luas_ha"].corr(tot["n_titik"], method="spearman")
+        r = tot["luas_ha"].rank().corr(tot["n_titik"].rank())      # korelasi peringkat (Spearman) tanpa scipy
         if r >= 0.7:
             st.info("**Banyak titik panas biasanya berarti lahan terbakar luas.** Tahun dengan titik panas terbanyak umumnya juga tahun dengan lahan terbakar terluas, "
                     "jadi titik panas cukup berguna sebagai petunjuk tingkat keparahan satu tahun.")
@@ -243,9 +243,10 @@ elif halaman == "Daerah rawan":
     st.caption("Jumlah adalah perkiraan (dikoreksi bila data banyak sehingga hanya sebagian yang diproses). Nama daerah = kabupaten terdekat dari pusat kawasan.")
 
 # ------------------------------------------------------------------ PRAKIRAAN
-elif halaman == "Prakiraan minggu depan":
-    st.title("Prakiraan area rawan minggu depan")
-    st.warning("Ini **hasil model statistik**, bukan peringatan resmi dari BMKG atau KLHK. Pakai untuk membantu menentukan prioritas pemantauan.")
+elif halaman == "Uji prakiraan model":
+    st.title("Seberapa baik model menebak area rawan minggu depan?")
+    st.warning("Halaman ini **menguji** model pada data masa lalu, **bukan prakiraan untuk minggu yang akan datang**, dan bukan peringatan resmi BMKG atau KLHK. "
+               "Gunanya menunjukkan seberapa bisa model dipercaya untuk membantu menentukan prioritas pemantauan.")
     st.write("Setiap minggu, model menilai tiap area (kotak sekitar 50 × 50 km) dari pola beberapa minggu terakhir dan musim: "
              "**seberapa mungkin area itu muncul titik panas pada minggu berikutnya?**")
     u = evaluasi[evaluasi["tahun_uji"] == evaluasi["tahun_uji"].max()].set_index("model")
@@ -265,7 +266,7 @@ elif halaman == "Prakiraan minggu depan":
         st.write("**Bagaimana di tahun lain?** (tahun parah biasanya lebih sulit)")
         st.dataframe(ket.rename(columns={"LightGBM + kalibrasi": "Model", "Klimatologi": "Tebakan pola musim"}).map(persen)
                      .rename_axis("Tahun uji").reset_index(), hide_index=True, width="stretch")
-    st.subheader("Simulasi per minggu")
+    st.subheader("Simulasi per minggu (uji di masa lalu)")
     st.caption("Ini simulasi di masa lalu: minggu yang dipilih disembunyikan dari model, lalu prakiraannya dicocokkan dengan kenyataan.")
     minggu = sorted(risiko["minggu_target"].unique())
     banyak = risiko.assign(t=risiko["skor"] >= 0.5).groupby("minggu_target")["t"].sum()
@@ -311,7 +312,7 @@ Skornya bisa terlalu yakin di ujung atas, jadi baca sebagai urutan prioritas, bu
 - Batas wilayah mengikuti versi tahun 2020, sehingga pemekaran wilayah sesudahnya (misalnya di Papua) belum tercermin. Data luas terbakar provinsi baru di Papua digabung ke provinsi induknya.
 - Luas terbakar (halaman *Luas terbakar*) berasal dari SIPONGI KEMENHUT dan berupa **indikasi** dari citra satelit, bukan pengukuran pasti. Data tahun 2025 belum dipakai karena tampak belum lengkap.
 - {hujan}
-- Model prakiraan dilatih dengan data mulai tahun {model_awal}, sedangkan halaman lain memakai seluruh tahun yang tersedia.
+- Model dilatih dengan data mulai tahun {model_awal}, sedangkan halaman lain memakai seluruh tahun yang tersedia.
 - Hasil ini belum diuji secara resmi dan bukan peringatan dini yang sah.
 """.replace("{model_awal}", MODEL_AWAL or "awal data").replace("{hujan}", "Model memakai data curah hujan bulanan (hujan 1 dan 3 bulan terakhir) sebagai petunjuk kekeringan, tetapi bukan hujan harian. Pada pengujian, tambahan ini hanya sedikit mengubah ketepatan: pola kebakaran beberapa minggu terakhir tetap petunjuk terkuat." if PAKAI_HUJAN else "Model belum memakai data curah hujan, sehingga tebakannya sebagian besar mengandalkan pola musim dan kejadian beberapa minggu terakhir."))
 
