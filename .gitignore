@@ -1,0 +1,13 @@
+﻿karhutla/db/
+karhutla/raw/
+karhutla/processed/
+karhutla_sintetis/
+idn_admin2.geojson
+batas_kabupaten.geojson
+*.tar.gz
+*.7z*
+*.zip
+*.duckdb
+*.duckdb.wal
+.ipynb_checkpoints/
+__pycache__/
