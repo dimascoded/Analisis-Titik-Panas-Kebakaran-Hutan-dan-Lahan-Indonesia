@@ -315,4 +315,3 @@ Skornya bisa terlalu yakin di ujung atas, jadi baca sebagai urutan prioritas, bu
 - Model dilatih dengan data mulai tahun {model_awal}, sedangkan halaman lain memakai seluruh tahun yang tersedia.
 - Hasil ini belum diuji secara resmi dan bukan peringatan dini yang sah.
 """.replace("{model_awal}", MODEL_AWAL or "awal data").replace("{hujan}", "Model memakai data curah hujan bulanan (hujan 1 dan 3 bulan terakhir) sebagai petunjuk kekeringan, tetapi bukan hujan harian. Pada pengujian, tambahan ini hanya sedikit mengubah ketepatan: pola kebakaran beberapa minggu terakhir tetap petunjuk terkuat." if PAKAI_HUJAN else "Model belum memakai data curah hujan, sehingga tebakannya sebagian besar mengandalkan pola musim dan kejadian beberapa minggu terakhir."))
-
